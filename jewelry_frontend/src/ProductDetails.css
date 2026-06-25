@@ -1,0 +1,47 @@
+.product-details{
+
+width:400px;
+
+margin:40px auto;
+
+text-align:center;
+
+padding:20px;
+
+border-radius:15px;
+
+box-shadow:0 0 15px gray;
+
+}
+
+
+.detail-image{
+
+width:250px;
+
+height:250px;
+
+object-fit:cover;
+
+border-radius:10px;
+
+}
+
+
+button{
+
+padding:10px 20px;
+
+margin:10px;
+
+cursor:pointer;
+
+border:none;
+
+border-radius:8px;
+
+background:#d4af37;
+
+color:white;
+
+}

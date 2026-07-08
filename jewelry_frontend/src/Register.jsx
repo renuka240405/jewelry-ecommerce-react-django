@@ -2,13 +2,16 @@ import {useState} from "react";
 import {useNavigate} from "react-router-dom";
 
 
-function Login(){
+function Register(){
 
 
 const navigate = useNavigate();
 
 
+
 const [username,setUsername]=useState("");
+
+const [email,setEmail]=useState("");
 
 const [password,setPassword]=useState("");
 
@@ -17,12 +20,31 @@ const [error,setError]=useState("");
 
 
 
-const login=()=>{
+
+const register=()=>{
+
+
+if(!username || !email || !password){
+
+
+setError(
+
+"All fields required ❌"
+
+);
+
+
+return;
+
+
+}
+
+
 
 
 fetch(
 
-"http://127.0.0.1:8000/api/users/login/",
+"http://127.0.0.1:8000/api/users/register/",
 
 {
 
@@ -35,7 +57,6 @@ headers:{
 
 "Content-Type":"application/json"
 
-
 },
 
 
@@ -43,6 +64,8 @@ body:JSON.stringify({
 
 
 username,
+
+email,
 
 password
 
@@ -63,7 +86,7 @@ password
 
 console.log(
 
-"LOGIN",
+"REGISTER",
 
 data
 
@@ -71,42 +94,30 @@ data
 
 
 
-if(data.access){
-
-
-
-localStorage.setItem(
-
-"token",
-
-data.access
-
-);
-
-
-
-alert(
-
-"Login Successful 🎉"
-
-);
-
-
-
-navigate("/");
-
-
-
-}
-
-else{
+if(data.username || data.email){
 
 
 setError(
 
-"Invalid Username or Password ❌"
+"Username or Email already exists ❌"
 
 );
+
+
+}
+
+
+else{
+
+
+alert(
+
+"Account Created 🎉"
+
+);
+
+
+navigate("/login");
 
 
 }
@@ -131,7 +142,7 @@ return(
 
 <h1>
 
-Login 💎
+Create Account 💎
 
 </h1>
 
@@ -145,6 +156,22 @@ placeholder="Username"
 onChange={e=>
 
 setUsername(e.target.value)
+
+}
+
+/>
+
+
+
+
+
+<input
+
+placeholder="Email"
+
+onChange={e=>
+
+setEmail(e.target.value)
 
 }
 
@@ -190,14 +217,13 @@ error &&
 
 <button
 
-onClick={login}
+onClick={register}
 
 >
 
-Login
+Register
 
 </button>
-
 
 
 
@@ -210,4 +236,4 @@ Login
 }
 
 
-export default Login;
+export default Register;

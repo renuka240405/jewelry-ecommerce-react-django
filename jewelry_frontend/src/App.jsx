@@ -1,46 +1,114 @@
-import { useEffect, useState } from "react";
+import {useEffect,useState} from "react";
 import "./App.css";
 
 import {
-  BrowserRouter,
-  Routes,
-  Route,
-  useNavigate
+BrowserRouter,
+Routes,
+Route,
+useNavigate
 } from "react-router-dom";
+
 
 import ProductDetails from "./ProductDetails";
 import Checkout from "./Checkout";
 import AdminDashboard from "./AdminDashboard";
 import Navbar from "./Navbar";
 import ProtectedAdmin from "./ProtectedAdmin";
-import Orders from "./Orders";
+import Wishlist from "./Wishlist";
+import MyOrders from "./MyOrders";
+import Register from "./Register";
+import Profile from "./Profile";
+import OrderSuccess from "./OrderSuccess";
+import Login from "./Login";
+import ProtectedRoute from "./ProtectedRoute";
+
+
+
 function ShopHome(){
 
-const navigate = useNavigate();
+
+const navigate=useNavigate();
 
 
-const [username,setUsername] = useState("");
-const [password,setPassword] = useState("");
 
-const [token,setToken] = useState(
+const [username,setUsername]=useState("");
+const [password,setPassword]=useState("");
+
+
+
+const [token,setToken]=useState(
 localStorage.getItem("token")
 );
 
+useEffect(() => {
 
-const [products,setProducts] = useState([]);
+    const refresh = localStorage.getItem("refresh");
 
-const [cart,setCart] = useState(()=>{
+    if (!refresh) return;
+
+    fetch("http://127.0.0.1:8000/api/users/token/refresh/", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            refresh: refresh
+        })
+
+    })
+
+    .then(res => res.json())
+
+    .then(data => {
+
+        if (data.access) {
+
+            localStorage.setItem("token", data.access);
+
+            setToken(data.access);
+
+        }
+
+    });
+
+}, []);
+
+
+const [products,setProducts]=useState([]);
+const [categories,setCategories]=useState([]);
+
+const [search,setSearch]=useState("");
+const [selectedCategory,setSelectedCategory]=useState("");
+const [minPrice,setMinPrice]=useState("");
+
+const [maxPrice,setMaxPrice]=useState("");
+
+const [metal,setMetal]=useState("");
+
+const [sort,setSort]=useState("");
+
+
+
+const [cart,setCart]=useState(()=>{
 
 return JSON.parse(
 localStorage.getItem("cart")
-) || [];
+)||[];
 
 });
 
 
-const [orders,setOrders] = useState([]);
 
-const [search,setSearch] = useState("");
+const [wishlist,setWishlist]=useState(()=>{
+
+return JSON.parse(
+localStorage.getItem("wishlist")
+)||[];
+
+});
 
 
 
@@ -48,7 +116,8 @@ const [search,setSearch] = useState("");
 
 // LOGIN
 
-const login = ()=>{
+
+const login=()=>{
 
 
 fetch(
@@ -65,12 +134,15 @@ headers:{
 
 },
 
+
 body:JSON.stringify({
 
 username,
+
 password
 
 })
+
 
 }
 
@@ -78,29 +150,22 @@ password
 
 .then(res=>res.json())
 
-.then(data=>{
+.then(data => {
 
+    if (data.access) {
 
-console.log("LOGIN:",data);
+        localStorage.setItem("token", data.access);
+        localStorage.setItem("refresh", data.refresh);
 
+        setToken(data.access);
 
-if(data.access){
+        window.location.reload();
 
-
-localStorage.setItem(
-"token",
-data.access
-);
-
-
-setToken(data.access);
-
-
-}
-
+    } else {
+        alert("Invalid username or password");
+    }
 
 });
-
 
 };
 
@@ -109,7 +174,8 @@ setToken(data.access);
 
 
 
-// GET PRODUCTS
+
+// PRODUCTS LOAD
 
 
 useEffect(()=>{
@@ -120,19 +186,68 @@ return;
 
 
 
+let url=
+"http://127.0.0.1:8000/api/products/products/";
+
+
+let params=new URLSearchParams();
+
+
+
+if(minPrice)
+params.append(
+"min_price",
+minPrice
+);
+
+
+
+if(maxPrice)
+params.append(
+"max_price",
+maxPrice
+);
+
+
+
+if(metal)
+params.append(
+"metal",
+metal
+);
+
+
+
+if(sort)
+params.append(
+"sort",
+sort
+);
+
+
+
+
+if(params.toString()){
+
+url += "?"+params.toString();
+
+}
+
+
+
+
+
 fetch(
 
-"http://127.0.0.1:8000/api/products/products/",
+url,
 
 {
 
 headers:{
 
-
 Authorization:
 
 `Bearer ${token}`
-
 
 }
 
@@ -146,28 +261,49 @@ Authorization:
 .then(data=>{
 
 
-console.log(
-"PRODUCT DATA:",
-data
-);
-
-
-
-if(Array.isArray(data)){
-
-
 setProducts(data);
 
 
+});
+
+
+
+},[
+token,
+minPrice,
+maxPrice,
+metal,
+sort
+]);
+
+useEffect(()=>{
+
+
+fetch(
+
+"http://127.0.0.1:8000/api/products/categories/",
+
+{
+
+headers:{
+
+Authorization:
+
+`Bearer ${token}`
+
 }
-else{
-
-
-setProducts([]);
-
 
 }
 
+)
+
+
+.then(res=>res.json())
+
+.then(data=>{
+
+
+setCategories(data);
 
 
 });
@@ -176,12 +312,31 @@ setProducts([]);
 },[token]);
 
 
+useEffect(() => {
+
+  if (!token) return;
+
+  fetch(
+    "http://127.0.0.1:8000/api/products/wishlist/",
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  )
+    .then(res => res.json())
+    .then(data => {
+
+      setWishlist(data);
+
+    });
+
+}, [token]);
 
 
 
 
-
-// ADD CART
+// CART
 
 
 const addToCart=(item)=>{
@@ -190,7 +345,7 @@ const addToCart=(item)=>{
 let updated=[...cart];
 
 
-let exist = updated.find(
+let exist=updated.find(
 x=>x.id===item.id
 );
 
@@ -198,23 +353,21 @@ x=>x.id===item.id
 
 if(exist){
 
-
-exist.quantity += 1;
-
+exist.quantity++;
 
 }
 
 else{
 
+
 updated.push({
 
 ...item,
 
-price:Number(item.price),
-
 quantity:1
 
 });
+
 
 }
 
@@ -231,55 +384,21 @@ JSON.stringify(updated)
 
 );
 
+window.dispatchEvent(
+new Event("storage")
+);
 
 };
 
 
 
 
-
-
-
-// REMOVE CART
-
-
-const removeFromCart=(id)=>{
-
-
-let updated = cart.filter(
-
-x=>x.id!==id
-
-);
-
-
-setCart(updated);
-
-
-localStorage.setItem(
-
-"cart",
-
-JSON.stringify(updated)
-
-);
-
-
-};
-
-
-
-
-
-
-// QUANTITY
 
 
 const increaseQty=(id)=>{
 
 
-let updated = cart.map(item=>
-
+let updated=cart.map(item=>
 
 item.id===id
 
@@ -316,11 +435,11 @@ JSON.stringify(updated)
 
 
 
+
 const decreaseQty=(id)=>{
 
 
-let updated = cart.map(item=>
-
+let updated=cart.map(item=>
 
 item.id===id && item.quantity>1
 
@@ -358,48 +477,27 @@ JSON.stringify(updated)
 
 
 
-
-// ORDERS
-
-
-const getMyOrders=()=>{
+const removeCart=(id)=>{
 
 
-fetch(
+let updated=cart.filter(
 
-"http://127.0.0.1:8000/api/orders/myorders/",
+x=>x.id!==id
 
-{
-
-headers:{
-
-
-Authorization:
-
-`Bearer ${token}`
-
-
-}
-
-}
-
-)
-
-.then(res=>res.json())
-
-.then(data=>{
-
-
-console.log(
-"MY ORDERS:",
-data
 );
 
 
-setOrders(data);
+setCart(updated);
 
 
-});
+localStorage.setItem(
+
+"cart",
+
+JSON.stringify(updated)
+
+);
+
 
 
 };
@@ -410,50 +508,28 @@ setOrders(data);
 
 
 
-// CANCEL
 
+// WISHLIST
 
-const cancelOrder=(id)=>{
+const addWishlist = (item) => {
 
-
-fetch(
-
-`http://127.0.0.1:8000/api/orders/cancel/${id}/`,
-
-{
-
-method:"POST",
-
-headers:{
-
-
-Authorization:
-
-`Bearer ${token}`
-
-
-}
-
-}
-
-)
-
-.then(res=>res.json())
-
-.then(data=>{
-
-
-console.log(
-"CANCEL:",
-data
-);
-
-
-getMyOrders();
-
-
-});
-
+    fetch(
+        "http://127.0.0.1:8000/api/products/wishlist/",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                product: item.id
+            })
+        }
+    )
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+    });
 
 };
 
@@ -462,20 +538,48 @@ getMyOrders();
 
 
 
+const filteredProducts = products.filter(item=>{
 
-const filteredProducts = products.filter(item=>
+
+const searchMatch =
 
 
 item.name
-.toLowerCase()
-.includes(
-search.toLowerCase()
-)
 
+.toLowerCase()
+
+.includes(
+
+search.toLowerCase()
 
 );
 
 
+
+const categoryMatch =
+
+
+selectedCategory
+
+
+?
+
+
+item.category === selectedCategory
+
+
+:
+
+
+true;
+
+
+
+return searchMatch && categoryMatch;
+
+
+
+});
 
 
 
@@ -485,18 +589,18 @@ search.toLowerCase()
 return(
 
 
-<div className="App">
+<div>
 
 
 <Navbar/>
 
 
+
+
 {
 
+!token ?
 
-!token
-
-?
 
 
 <>
@@ -511,8 +615,8 @@ Login 💎
 
 placeholder="username"
 
-onChange={
-e=>setUsername(e.target.value)
+onChange={e=>
+setUsername(e.target.value)
 }
 
 />
@@ -524,8 +628,8 @@ type="password"
 
 placeholder="password"
 
-onChange={
-e=>setPassword(e.target.value)
+onChange={e=>
+setPassword(e.target.value)
 }
 
 />
@@ -533,15 +637,28 @@ e=>setPassword(e.target.value)
 
 
 <button onClick={login}>
+
 Login
+
 </button>
 
+
+<button
+
+onClick={()=>navigate("/register")}
+
+>
+
+Create Account
+
+</button>
 
 </>
 
 
 
 :
+
 
 
 <>
@@ -552,7 +669,17 @@ Login
 Jewelry Shop 💎
 </h1>
 
+<div className="hero">
 
+
+<h1>
+Premium Jewelry Collection 💎
+</h1>
+
+
+<p>
+Elegant designs for every occasion ✨
+</p>
 
 
 
@@ -560,350 +687,390 @@ Jewelry Shop 💎
 
 onClick={()=>{
 
-localStorage.removeItem("token");
-
-setToken(null);
+document
+.getElementById("collection")
+.scrollIntoView();
 
 }}
 
 >
 
-Logout
+Shop Now
 
 </button>
 
+
+</div>
+
+
+
+<h2>🛒 Cart ({cart.length})</h2>
+
+<div className="top-buttons">
+
+  <button onClick={() => navigate("/checkout")}>
+    Checkout
+  </button>
+
+  <button onClick={() => navigate("/wishlist")}>
+    ❤️ Wishlist ({wishlist.length})
+  </button>
+
+  <button onClick={() => navigate("/orders")}>
+    📦 My Orders
+  </button>
+
+  <button onClick={() => navigate("/profile")}>
+    👤 Profile
+  </button>
+
+</div>
 
 
 
 
 
 <h2>
-Cart 🛒 {cart.length}
+Search 🔍
 </h2>
 
 
+<input
+
+className="search-box"
+
+placeholder="🔍 Search jewelry..."
+
+value={search}
+
+onChange={e=>
+
+setSearch(e.target.value)
 
 
-<h3>
-
-Total ₹
-
-{
-
-cart.reduce(
-
-(a,b)=>
-
-a+(b.price*b.quantity),
-
-0
-
-)
 
 }
 
-</h3>
+/>
 
 
+<select
 
+value={selectedCategory}
 
+onChange={e=>
 
-<button
+setSelectedCategory(e.target.value)
 
-onClick={()=>navigate("/checkout")}
-
->
-
-Checkout
-
-</button>
-
-
-
-
-
-<button
-
-onClick={getMyOrders}
+}
 
 >
 
-My Orders 📦
+
+<option value="">
+
+All Category
+
+</option>
+
+
+<option value="ring">
+
+Ring
+
+</option>
+
+
+
+<option value="necklace">
+
+Necklace
+
+</option>
+
+
+
+<option value="diamond">
+
+Diamond
+
+</option>
+
+
+
+</select>
+
+
+
+<h2>
+Categories 💎
+</h2>
+
+<div className="categories">
+
+<button
+onClick={() => setSelectedCategory("")}
+>
+All
+</button>
+
+{
+categories.map(cat => (
+
+<button
+key={cat.id}
+onClick={() => setSelectedCategory(cat.name)}
+>
+
+{cat.name}
 
 </button>
 
+))
+}
 
-
+</div>
 
 
 
 
 <h2>
-My Orders 📦
+Filters 🔍
 </h2>
+
+
+
+<input
+    type="number"
+    placeholder="Min Price"
+    value={minPrice}
+    onChange={(e) => setMinPrice(e.target.value)}
+/>
+
+<input
+    type="number"
+    placeholder="Max Price"
+    value={maxPrice}
+    onChange={(e) => setMaxPrice(e.target.value)}
+/>
+
+
+
+<select
+
+onChange={e=>
+setMetal(e.target.value)
+}
+
+>
+
+
+<option value="">
+All Metal
+</option>
+
+
+<option value="Gold">
+Gold
+</option>
+
+
+<option value="Silver">
+Silver
+</option>
+
+
+<option value="Diamond">
+Diamond
+</option>
+
+
+
+</select>
+
+
+
+
+
+
+<select
+
+onChange={e=>
+setSort(e.target.value)
+}
+
+>
+
+
+<option value="">
+Sort
+</option>
+
+
+<option value="price_low">
+Price Low
+</option>
+
+
+<option value="price_high">
+Price High
+</option>
+
+
+<option value="latest">
+Latest
+</option>
+
+
+</select>
+
+
+
+
+
+
+
+<h2 id="collection">
+
+Jewelry Collection 💎
+
+</h2>
+
+
+
+
+<div className="shop-grid">
+
 
 
 {
 
-orders.map(order=>(
+filteredProducts.map(item=>(
+
 
 
 <div
 
-className="cart-item"
+className="shop-card"
 
-key={order.id}
+
+key={item.id}
 
 >
 
-
-<h3>
-
-Order #{order.id}
-
-</h3>
-
-
-
-<p>
-
-👤 Customer:
-
-{order.customer || order.user}
-
-</p>
-
-
-
-
-<h4>
-
-Products:
-
-</h4>
-
-
-
 {
 
-order.products?.map(product=>(
+item.discount>0 &&
 
+<span className="discount">
 
-<p key={product.id}>
-
-
-💎 {product.name}
-
-<br/>
-
-₹{product.price}
-
-
-</p>
-
-
-))
-
-
-}
-
-
-
-
-
-<p>
-
-Status:
-
-<span>
-
-{order.status}
+-{item.discount}% OFF
 
 </span>
 
+}
 
+{
+
+item.image &&
+
+<img
+
+src={item.image}
+
+width="200"
+
+/>
+
+
+}
+
+
+
+
+
+<h2>
+
+{item.name}
+
+</h2>
+
+
+
+<p>
+{item.description}
 </p>
 
 
 
-
-
-<div>
-
-
-{
-
-order.status==="Pending"
-
-&&
-
-"🟡 Waiting for confirmation"
-
-}
-
-
-
-
-{
-
-order.status==="Confirmed"
-
-&&
-
-"🔵 Order confirmed"
-
-}
-
-
-
-
-{
-
-order.status==="Shipped"
-
-&&
-
-"🚚 Product shipped"
-
-}
-
-
-
-
-{
-
-order.status==="Delivered"
-
-&&
-
-"🟢 Delivered"
-
-}
-
-
-
-
-{
-
-order.status==="Cancelled"
-
-&&
-
-"🔴 Cancelled"
-
-}
-
-
-
-</div>
-
-
-
-
-
-
-{
-
-order.status==="Pending"
-
-&&
-
-
-<button
-
-onClick={()=>cancelOrder(order.id)}
-
->
-
-Cancel Order
-
-</button>
-
-
-}
-
-
-
-</div>
-
-
-
-))
-
-
-}
-
-
-
-{
-
-orders.map(order=>(
-
-
-<div
-
-className="cart-item"
-
-key={order.id}
-
->
-
-
 <h3>
-Order #{order.id}
+
+₹{item.price}
+
 </h3>
 
 
 <p>
-Customer: {order.user}
-</p>
 
-
-<p>
-Status: {order.status}
-</p>
-
-
-
-{
-
-order.products?.map(product=>(
-
-
-<p key={product.id}>
-
-💎 {product.name}
-
-<br/>
-
-₹{product.price}
+⭐ Rating {item.rating}
 
 </p>
 
 
-))
 
-}
-
-
-
-
-
-{
-
-order.status==="Pending"
-
-&&
 
 <button
 
-onClick={()=>cancelOrder(order.id)}
+onClick={() =>
+    navigate(`/product/${item.id}`)
+}
 
 >
 
-Cancel
+View Details
 
 </button>
+
+
+
+
+
+<button
+
+className="cart-btn"
+
+onClick={()=>addToCart(item)}
+
+>
+
+🛒 Add Cart
+
+</button>
+
+
+
+
+
+<button
+
+className="wish-btn"
+
+onClick={()=>addWishlist(item)}
+
+>
+
+❤️ Wishlist
+
+</button>
+
+
+
+
+</div>
+
+
+
+))
 
 
 }
@@ -911,12 +1078,6 @@ Cancel
 
 
 </div>
-
-
-))
-
-
-}
 
 
 
@@ -927,6 +1088,7 @@ Cancel
 <h2>
 Cart Items
 </h2>
+
 
 
 
@@ -946,17 +1108,17 @@ key={item.id}
 
 
 <h3>
+
 {item.name}
+
 </h3>
 
 
-<p>
 ₹{item.price}
-</p>
 
 
 <p>
-Qty: {item.quantity}
+Qty {item.quantity}
 </p>
 
 
@@ -971,7 +1133,7 @@ Qty: {item.quantity}
 </button>
 
 
-<button onClick={()=>removeFromCart(item.id)}>
+<button onClick={()=>removeCart(item.id)}>
 Remove
 </button>
 
@@ -980,163 +1142,18 @@ Remove
 </div>
 
 
+
 ))
 
 
 }
 
 
-
-
-
-
-
-
-<h2>
-Search 🔍
-</h2>
-
-
-<input
-
-placeholder="search jewelry"
-
-onChange={
-e=>setSearch(e.target.value)
-}
-
-/>
-
-
-
-
-
-
-
-<h2>
-Products
-</h2>
-
-
-
-
-{
-
-filteredProducts.map(item=>(
-
-
-<div
-
-className="card"
-
-key={item.id}
-
->
-
-
-
-{
-
-item.image &&
-
-
-
-
-<img
-
-src={
-item.image
-?
-`http://127.0.0.1:8000${item.image}`
-:
-""
-}
-
-alt={item.name}
-
-width="200"
-
-/>
-
-}
-
-
-
-<h2>
-{item.name}
-</h2>
-
-
-<p>
-{item.description}
-</p>
-
-
-<h3>
-₹{item.price}
-</h3>
-
-
-<p>
-Discount: {item.discount}%
-</p>
-
-
-<p>
-Rating ⭐ {item.rating}
-</p>
-
-
-
-
-<button
-
-onClick={()=>navigate(
-
-"/product",
-
-{
-
-state:item
-
-}
-
-)}
-
->
-
-View Details
-
-</button>
-
-
-
-
-
-<button
-
-onClick={()=>addToCart(item)}
-
->
-
-Add Cart 🛒
-
-</button>
-
-
-
-
-</div>
-
-
-))
-
-
-}
 
 
 
 </>
+
 
 }
 
@@ -1161,6 +1178,7 @@ Add Cart 🛒
 function App(){
 
 
+
 return(
 
 
@@ -1170,20 +1188,95 @@ return(
 <Routes>
 
 <Route
+
+path="/register"
+
+element={<Register/>}
+
+/>
+
+<Route
+    path="/profile"
+    element={<Profile />}
+/>
+
+<Route
+
+path="/success"
+
+element={<OrderSuccess/>}
+
+/>
+
+<Route
+
 path="/"
+
 element={<ShopHome/>}
+
 />
 
 
 <Route
+
+path="/login"
+
+element={<Login/>}
+
+/>
+
+
+
+<Route
+
 path="/checkout"
-element={<Checkout/>}
+
+element={
+
+<ProtectedRoute>
+
+<Checkout/>
+
+</ProtectedRoute>
+
+}
+
 />
 
 
+
 <Route
-path="/product"
-element={<ProductDetails/>}
+    path="/product/:id"
+    element={<ProductDetails/>}
+/>
+
+
+
+<Route
+
+path="/wishlist"
+
+element={<Wishlist/>}
+
+/>
+
+
+
+
+<Route
+
+path="/orders"
+
+element={
+
+<ProtectedRoute>
+
+<MyOrders/>
+
+</ProtectedRoute>
+
+}
+
 />
 
 
@@ -1204,19 +1297,16 @@ element={
 />
 
 
-<Route
-path="*"
-element={<ShopHome/>}
-/>
-
 
 </Routes>
+
 
 
 </BrowserRouter>
 
 
 );
+
 
 
 }

@@ -1,84 +1,105 @@
-import {Link,useNavigate} from "react-router-dom";
-import "./Navbar.css";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
+function Navbar() {
+    const navigate = useNavigate();
 
-function Navbar(){
+    const [isAdmin, setIsAdmin] = useState(false);
 
+    const token = localStorage.getItem("token") || "";
 
-const navigate = useNavigate();
+    const logout = () => {
 
+        localStorage.removeItem("token");
+        localStorage.removeItem("refresh");
+        localStorage.removeItem("cart");
+        localStorage.removeItem("wishlist");
 
-const logout=()=>{
+        navigate("/");
 
+        window.location.reload();
+    };
 
-localStorage.removeItem("token");
+    useEffect(() => {
 
+        if (!token) return;
 
-navigate("/");
+        fetch("http://127.0.0.1:8000/api/users/profile/", {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+            .then((res) => {
 
+                if (!res.ok) {
+                    throw new Error("Unauthorized");
+                }
 
-window.location.reload();
+                return res.json();
+            })
+            .then((data) => {
 
+                console.log("PROFILE:", data);
 
-};
+                setIsAdmin(data.is_admin);
+            })
+            .catch((err) => {
+                console.log("Profile Error:", err);
+            });
 
+    }, [token]);
 
+    const wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
 
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-return(
+    return (
+        <nav>
 
-<nav className="navbar">
+            <h2>💎 Jewelry Shop</h2>
 
+            <Link to="/">
+                Home
+            </Link>
 
-<h2>
-💎 Jewelry Shop
-</h2>
+            <Link to="/wishlist">
+                ❤️ Wishlist ({wishlist.length})
+            </Link>
 
+            <Link to="/checkout">
+                🛒 Cart ({cart.length})
+            </Link>
 
+            <Link to="/register">
+                Create Account ✨
+            </Link>
 
-<div className="nav-links">
+            <Link to="/orders">
+                📦 My Orders
+            </Link>
 
+            {isAdmin && (
+                <Link to="/admin">
+                    ⚙️ Admin Dashboard
+                </Link>
+            )}
 
-<Link to="/">
-Home
-</Link>
+            <Link to="/profile">
+                👤 Profile
+            </Link>
 
+            {token ? (
+                <button onClick={logout}>
+                    Logout 🚪
+                </button>
+            ) : (
+                <button onClick={() => navigate("/login")}>
+                    Login
+                </button>
+            )}
 
-
-<Link to="/admin">
-Admin
-</Link>
-
-
-
-<Link to="/checkout">
-Cart 🛒
-</Link>
-
-
-
-<button
-
-onClick={logout}
-
->
-
-Logout
-
-</button>
-
-
-
-</div>
-
-
-</nav>
-
-
-);
-
-
+        </nav>
+    );
 }
-
 
 export default Navbar;

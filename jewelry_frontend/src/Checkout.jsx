@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {useState} from "react";
+import {useNavigate} from "react-router-dom";
 
 
 function Checkout(){
@@ -8,41 +8,49 @@ function Checkout(){
 const navigate = useNavigate();
 
 
-const [address,setAddress] = useState("");
-
-const [phone,setPhone] = useState("");
-
-
-
-const cart = JSON.parse(
-localStorage.getItem("cart")
-) || [];
-
-
-
 const token = localStorage.getItem("token");
 
 
 
+const [cart,setCart]=useState(()=>{
 
 
-const placeOrder = ()=>{
+return JSON.parse(
+
+localStorage.getItem("cart")
+
+)||[];
 
 
-if(!address || !phone){
-
-alert("Enter address and phone");
-
-return;
-
-}
+});
 
 
+
+
+
+const total = cart.reduce(
+
+(sum,item)=>
+
+sum + item.price * item.quantity,
+
+0
+
+);
+
+
+
+
+
+const placeOrder=()=>{
 
 
 const productIds = cart.map(
+
 item=>item.id
+
 );
+
 
 
 
@@ -69,80 +77,53 @@ Authorization:
 },
 
 
-body:JSON.stringify({
-
-products: cart.map(item=>item.id)
-
+body: JSON.stringify({
+    products: productIds,
+    payment_method: paymentMethod
 })
+
 
 }
 
 )
 
 
+.then(res=>res.json())
 
-.then(async res=>{
-
-
-const data = await res.json();
+.then(data=>{
 
 
 console.log(
-"ORDER RESPONSE:",
+
+"ORDER CREATED",
+
 data
+
 );
 
-
-
-if(res.ok){
 
 
 alert(
-"Order Placed Successfully 💎"
+
+"Order Placed 🎉"
+
 );
 
 
 
-localStorage.removeItem("cart");
+localStorage.removeItem(
 
+"cart"
 
-
-navigate("/");
-
-
-}
-
-else{
-
-
-console.log(
-"ERROR:",
-data
 );
 
 
-alert(
-"Order Failed"
-);
 
+navigate("/orders");
 
-}
-
-
-})
-
-
-.catch(err=>{
-
-
-console.log(
-"ORDER ERROR:",
-err
-);
 
 
 });
-
 
 
 };
@@ -151,31 +132,17 @@ err
 
 
 
-
-
 return(
 
 
-<div className="checkout">
-
+<div>
 
 
 <h1>
 
-Checkout 💎
+Checkout 💳
 
 </h1>
-
-
-
-
-
-<h2>
-
-Products
-
-</h2>
-
 
 
 
@@ -201,18 +168,18 @@ key={item.id}
 </h3>
 
 
+
 <p>
 
-₹{item.price}
+Qty : {item.quantity}
 
 </p>
 
 
+
 <p>
 
-Quantity :
-
-{item.quantity}
+₹{item.price}
 
 </p>
 
@@ -230,88 +197,48 @@ Quantity :
 
 
 
-
-
 <h2>
 
-
-Total ₹
-
-{
-
-cart.reduce(
-
-(a,b)=>
-
-a+(b.price*b.quantity),
-
-0
-
-)
-
-
-}
-
+Total : ₹{total}
 
 </h2>
 
+<h3>Select Payment Method</h3>
 
+<select
+    value={paymentMethod}
+    onChange={(e)=>setPaymentMethod(e.target.value)}
+>
 
+    <option value="COD">
+        Cash On Delivery
+    </option>
 
+    <option value="UPI">
+        UPI
+    </option>
 
+    <option value="Card">
+        Credit / Debit Card
+    </option>
 
-
-<input
-
-placeholder="Address"
-
-value={address}
-
-onChange={
-
-e=>setAddress(e.target.value)
-
-}
-
-/>
-
-
-
-
-
-<input
-
-placeholder="Phone Number"
-
-value={phone}
-
-onChange={
-
-e=>setPhone(e.target.value)
-
-}
-
-/>
-
-
-
-
-
+</select>
 
 
 
 <button
+
+className="cart-btn"
 
 onClick={placeOrder}
 
 >
 
 
-Place Order 💎
+Place Order 📦
 
 
 </button>
-
 
 
 
@@ -322,9 +249,7 @@ Place Order 💎
 );
 
 
-
 }
-
 
 
 export default Checkout;

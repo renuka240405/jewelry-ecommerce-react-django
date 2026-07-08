@@ -19,7 +19,7 @@ localStorage.getItem("token");
 
 fetch(
 
-"http://127.0.0.1:8000/api/orders/myorders/",
+"https://jewelry-ecommerce-react-django.onrender.com/api/orders/myorders/",
 
 {
 
@@ -81,7 +81,7 @@ localStorage.getItem("token");
 
 fetch(
 
-`http://127.0.0.1:8000/api/orders/cancel/${id}/`,
+`https://jewelry-ecommerce-react-django.onrender.com/api/orders/cancel/${id}/`,
 
 {
 

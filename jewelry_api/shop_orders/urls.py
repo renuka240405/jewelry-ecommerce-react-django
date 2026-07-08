@@ -1,41 +1,19 @@
 from django.urls import path
-from . import views
 
+from .views import (
+    OrderCreateView,
+    MyOrdersView,
+    UpdateStatusView,
+    CancelOrderView,
+    AllOrdersView,
+    AdminOrdersView,
+)
 
 urlpatterns = [
-
-    path(
-        "create/",
-        views.OrderCreateView.as_view()
-    ),
-
-
-    path(
-        "myorders/",
-        views.MyOrdersView.as_view()
-    ),
-
-
-    path(
-        "cancel/<int:id>/",
-        views.CancelOrderView.as_view()
-    ),
-
-
-    path(
-        "update-status/<int:id>/",
-        views.UpdateStatusView.as_view()
-    ),
-
-
-    path(
-        "allorders/",
-        views.AllOrdersView.as_view()
-    ),
-
-    path(
-"allorders/",
-views.AdminOrdersView.as_view()
-),
-
+    path("create/", OrderCreateView.as_view()),
+    path("myorders/", MyOrdersView.as_view()),
+    path("update-status/<int:id>/", UpdateStatusView.as_view()),
+    path("cancel/<int:id>/", CancelOrderView.as_view()),
+    path("allorders/", AllOrdersView.as_view()),
+    path("adminorders/", AdminOrdersView.as_view()),
 ]

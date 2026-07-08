@@ -1,103 +1,85 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
-
-from .serializers import OrderSerializer
-
-
-from rest_framework.permissions import IsAdminUser
 from .models import Order
+from .serializers import OrderSerializer
 
 
 class OrderCreateView(APIView):
 
-    permission_classes=[IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
-
-    def post(self,request):
+    def post(self, request):
 
         product_ids = request.data.get("products")
-
+        payment_method = request.data.get("payment_method", "COD")
 
         order = Order.objects.create(
-            user=request.user
+            user=request.user,
+            payment_method=payment_method,
+            payment_status="Pending"
         )
-
 
         order.products.set(product_ids)
 
+        total = 0
+
+        for product in order.products.all():
+            total += product.price
+
+        order.total_price = total
+        order.save()
 
         return Response({
-
-            "message":"Order created",
-
-            "id":order.id
-
+            "message": "Order created",
+            "id": order.id,
+            "total": total,
+            "payment_method": order.payment_method,
+            "payment_status": order.payment_status
         })
-
 
 
 class MyOrdersView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-
     def get(self, request):
 
-        orders = Order.objects.filter(
-            user=request.user
-        )
+        orders = Order.objects.filter(user=request.user)
 
-
-        data = []
-
+        result = []
 
         for order in orders:
 
-
-            products = []
-
+            items = []
 
             for product in order.products.all():
 
-                products.append({
-
+                items.append({
                     "id": product.id,
-
                     "name": product.name,
-
                     "price": product.price
-
                 })
 
-
-
-            data.append({
-
+            result.append({
                 "id": order.id,
-
-                "products": products,
-
-                "user": order.user.username,
-
-                "status": getattr(
-                    order,
-                    "status",
-                    "Pending"
-                )
-
+                "products": items,
+                "status": order.status,
+                "payment_method": order.payment_method,
+                "payment_status": order.payment_status,
+                "total_price": order.total_price,
+                "created_at": order.created_at
             })
 
+        return Response(result)
 
 
-        return Response(data)
 class UpdateStatusView(APIView):
 
     permission_classes = [IsAdminUser]
 
-
-    def post(self,request,id):
+    def post(self, request, id):
 
         order = Order.objects.get(id=id)
 
@@ -105,20 +87,15 @@ class UpdateStatusView(APIView):
 
         order.save()
 
-
         return Response({
-
-            "message":"Status Updated",
-
-            "status":order.status
-
+            "message": "Status Updated",
+            "status": order.status
         })
 
 
 class CancelOrderView(APIView):
 
     permission_classes = [IsAuthenticated]
-
 
     def post(self, request, id):
 
@@ -127,56 +104,19 @@ class CancelOrderView(APIView):
             user=request.user
         )
 
-
         order.status = "Cancelled"
-
         order.save()
 
-
         return Response({
-
-            "message":
-            "Order Cancelled"
-
+            "message": "Order Cancelled"
         })
-
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from .models import Order
-
-
-
-class UpdateOrderStatusView(APIView):
-
-    def post(self, request, id):
-
-        order = Order.objects.get(id=id)
-
-
-        status = request.data.get("status")
-
-
-        order.status = status
-
-        order.save()
-
-
-        return Response({
-
-            "message":"Status Updated",
-
-            "status":order.status
-
-        })
-from rest_framework.permissions import IsAdminUser
 
 
 class AllOrdersView(APIView):
 
     permission_classes = [IsAdminUser]
 
-
-    def get(self,request):
+    def get(self, request):
 
         orders = Order.objects.all()
 
@@ -187,33 +127,24 @@ class AllOrdersView(APIView):
 
         return Response(serializer.data)
 
+
 class AdminOrdersView(APIView):
 
-    permission_classes=[IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
-
-    def get(self,request):
-
+    def get(self, request):
 
         if not request.user.is_staff:
-
             return Response(
-                {
-                    "error":"Admin only"
-                },
+                {"error": "Admin only"},
                 status=403
             )
 
-
         orders = Order.objects.all()
-
 
         serializer = OrderSerializer(
             orders,
             many=True
         )
 
-
-        return Response(
-            serializer.data
-        )
+        return Response(serializer.data)

@@ -1,6 +1,6 @@
 import requests
 
-url = "https://https://jewelry-ecommerce-react-django-2.onrender.com/api/users/login/"
+url = "https://jewelry-ecommerce-react-django-2.onrender.com/api/users/login/"
 
 data = {
     "username": "testuser",

@@ -1,6 +1,6 @@
 import requests
 
-url = "http://127.0.0.1:8000/api/users/login/"
+url = "https://jewelry-ecommerce-react-django-2.onrender.com/api/users/login/"
 
 data = {
     "username": "testuser",

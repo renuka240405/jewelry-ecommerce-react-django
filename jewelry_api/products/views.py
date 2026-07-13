@@ -57,18 +57,19 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 
 
-    def get_permissions(self):
+from rest_framework.permissions import AllowAny
 
-        if self.action in [
-            "create",
-            "update",
-            "partial_update",
-            "destroy"
-        ]:
-            return [IsAdminUser()]
+def get_permissions(self):
 
+    if self.action in [
+        "create",
+        "update",
+        "partial_update",
+        "destroy"
+    ]:
+        return [IsAdminUser()]
 
-        return [IsAuthenticated()]
+    return [AllowAny()]
 
 
 
@@ -82,9 +83,9 @@ class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
 
 
-    permission_classes=[
-        IsAuthenticated
-    ]
+    permission_classes = [
+    AllowAny
+]
 
 
 

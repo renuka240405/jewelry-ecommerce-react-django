@@ -12,7 +12,7 @@ function Profile() {
     useEffect(() => {
 
         fetch(
-            "http://127.0.0.1:8000/api/users/profile/",
+            "https://jewelry-ecommerce-react-django-5.onrender.com/api/users/profile/",
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`
@@ -29,7 +29,7 @@ function Profile() {
     const updateProfile = () => {
 
         fetch(
-            "http://127.0.0.1:8000/api/users/profile/",
+            "https://jewelry-ecommerce-react-django-5.onrender.com/api/users/profile/",
             {
                 method: "PUT",
 

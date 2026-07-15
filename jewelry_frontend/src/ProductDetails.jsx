@@ -1,348 +1,289 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 function ProductDetails() {
 
-  const location = useLocation();
-  const navigate = useNavigate();
+    const { id } = useParams();
+    const navigate = useNavigate();
 
-  const product = location.state;
+    const [product, setProduct] = useState(null);
+    const [products, setProducts] = useState([]);
+    const [reviews, setReviews] = useState([]);
 
-  const [products, setProducts] = useState([]);
-  const [reviews, setReviews] = useState([]);
+    const [qty, setQty] = useState(1);
 
-  const [qty, setQty] = useState(1);
+    const [rating, setRating] = useState(5);
+    const [comment, setComment] = useState("");
 
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState("");
+    // Load selected product
+    useEffect(() => {
 
-  if (!product) {
-    return <h2>Product Not Found</h2>;
-  }
+        fetch(`https://jewelry-ecommerce-react-django-5.onrender.com/api/products/products/${id}/`)
+            .then(res => res.json())
+            .then(data => {
+                setProduct(data);
+            });
 
-  // -----------------------------
-  // Load Related Products
-  // -----------------------------
-  useEffect(() => {
+    }, [id]);
 
-    fetch(
-      "http://127.0.0.1:8000/api/products/products/",
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        }
-      }
-    )
-      .then(res => res.json())
-      .then(data => {
+    // Load all products
+    useEffect(() => {
 
-        setProducts(Array.isArray(data) ? data : []);
+        fetch("https://jewelry-ecommerce-react-django-5.onrender.com/api/products/products/")
+            .then(res => res.json())
+            .then(data => {
+                setProducts(Array.isArray(data) ? data : []);
+            });
 
-      });
+    }, []);
 
-  }, []);
+    // Load reviews
+    useEffect(() => {
 
-  // -----------------------------
-  // Load Reviews
-  // -----------------------------
-  useEffect(() => {
+        fetch(`https://jewelry-ecommerce-react-django-5.onrender.com/api/products/review/${id}/`, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                setReviews(Array.isArray(data) ? data : []);
+            });
 
-    fetch(
-      `http://127.0.0.1:8000/api/products/review/${product.id}/`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        }
-      }
-    )
-      .then(res => res.json())
-      .then(data => {
+    }, [id]);
 
-        setReviews(Array.isArray(data) ? data : []);
-
-      });
-
-  }, [product.id]);
-
-  // -----------------------------
-  // Add To Cart
-  // -----------------------------
-  const addCart = () => {
-
-    let cart =
-      JSON.parse(localStorage.getItem("cart")) || [];
-
-    let exist = cart.find(x => x.id === product.id);
-
-    if (exist) {
-
-      exist.quantity += qty;
-
-    } else {
-
-      cart.push({
-
-        ...product,
-
-        quantity: qty
-
-      });
-
+    if (!product) {
+        return <h2>Loading...</h2>;
     }
 
-    localStorage.setItem(
-      "cart",
-      JSON.stringify(cart)
-    );
+    const total = product.price * qty;
 
-    alert("Added to Cart 🛒");
-  };
+    const addCart = () => {
 
-  // -----------------------------
-  // Buy Now
-  // -----------------------------
-  const buyNow = () => {
+        let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-    localStorage.setItem(
-      "cart",
-      JSON.stringify([
-        {
-          ...product,
-          quantity: qty
+        const exist = cart.find(x => x.id === product.id);
+
+        if (exist) {
+
+            exist.quantity += qty;
+
+        } else {
+
+            cart.push({
+                ...product,
+                quantity: qty
+            });
+
         }
-      ])
-    );
 
-    navigate("/checkout");
-  };
+        localStorage.setItem("cart", JSON.stringify(cart));
 
-  // -----------------------------
-  // Submit Review
-  // -----------------------------
-  const submitReview = () => {
+        alert("Added to Cart");
+    };
 
-    fetch(
-      "http://127.0.0.1:8000/api/products/review/",
-      {
-        method: "POST",
+    const buyNow = () => {
 
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        },
-
-        body: JSON.stringify({
-
-          product: product.id,
-
-          rating: Number(rating),
-
-          comment
-
-        })
-      }
-    )
-
-      .then(res => res.json())
-
-      .then(() => {
-
-        alert("Review Added ⭐");
-
-        return fetch(
-          `http://127.0.0.1:8000/api/products/review/${product.id}/`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`
-            }
-          }
+        localStorage.setItem(
+            "cart",
+            JSON.stringify([
+                {
+                    ...product,
+                    quantity: qty
+                }
+            ])
         );
 
-      })
+        navigate("/checkout");
+    };
 
-      .then(res => res.json())
+    const submitReview = () => {
 
-      .then(data => {
+        fetch("https://jewelry-ecommerce-react-django-5.onrender.com/api/products/review/", {
 
-        setReviews(Array.isArray(data) ? data : []);
+            method: "POST",
 
-        setComment("");
+            headers: {
 
-        setRating(5);
+                "Content-Type": "application/json",
 
-      });
+                Authorization: `Bearer ${localStorage.getItem("token")}`
 
-  };
+            },
+
+            body: JSON.stringify({
+
+                product: product.id,
+
+                rating: Number(rating),
+
+                comment
+
+            })
+
+        })
+
+            .then(res => res.json())
+
+            .then(() => {
+
+                alert("Review Added");
+
+                window.location.reload();
+
+            });
+
+    };
 
     return (
 
-    <div className="product-details">
+        <div className="product-details">
 
-      <button onClick={() => navigate("/")}>
-        ⬅ Back
-      </button>
+            <button onClick={() => navigate("/")}>
+                ⬅ Back
+            </button>
 
-      {product.image && (
-        <img
-          src={product.image}
-          className="details-image"
-          alt={product.name}
-        />
-      )}
+            {product.image && (
+                <img
+                    src={product.image}
+                    alt={product.name}
+                    className="details-image"
+                />
+            )}
 
-      <h1>{product.name}</h1>
+            <h1>{product.name}</h1>
 
-      <h2>₹{product.price}</h2>
+            <h2>₹{product.price}</h2>
 
-      <p>{product.description}</p>
+            <p>{product.description}</p>
 
-      <p>⭐ Rating {product.rating}</p>
-
-      <hr />
-
-      <h2>Quantity</h2>
-
-      <button
-        onClick={() => {
-          if (qty > 1) setQty(qty - 1);
-        }}
-      >
-        -
-      </button>
-
-      <span style={{ margin: "0 10px" }}>
-        {qty}
-      </span>
-
-      <button
-        onClick={() => setQty(qty + 1)}
-      >
-        +
-      </button>
-
-      <h2>Total ₹{product.price * qty}</h2>
-
-      <button
-        onClick={addCart}
-      >
-        🛒 Add Cart
-      </button>
-
-      <button
-        onClick={buyNow}
-      >
-        ⚡ Buy Now
-      </button>
-
-      <hr />
-
-      <h2>⭐ Reviews</h2>
-
-      <input
-        type="number"
-        min="1"
-        max="5"
-        value={rating}
-        onChange={(e) => setRating(e.target.value)}
-      />
-
-      <br /><br />
-
-      <textarea
-        placeholder="Write review..."
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-      />
-
-      <br /><br />
-
-      <button
-        onClick={submitReview}
-      >
-        Submit Review
-      </button>
-
-      <br /><br />
-
-      {Array.isArray(reviews) && reviews.length > 0 ? (
-
-        reviews.map(review => (
-
-          <div
-            key={review.id}
-            className="review-card"
-          >
-
-            <h3>⭐ {review.rating}</h3>
-
-            <p>{review.comment}</p>
+            <p>⭐ {product.rating}</p>
 
             <hr />
 
-          </div>
+            <button onClick={() => qty > 1 && setQty(qty - 1)}>
+                -
+            </button>
 
-        ))
+            <span style={{ margin: "0 10px" }}>{qty}</span>
 
-      ) : (
+            <button onClick={() => setQty(qty + 1)}>
+                +
+            </button>
 
-        <p>No Reviews Yet.</p>
+            <h2>Total ₹{total}</h2>
 
-      )}
+            <button onClick={addCart}>
+                Add Cart
+            </button>
 
-      <hr />
+            <button onClick={buyNow}>
+                Buy Now
+            </button>
 
-      <h2>Related Jewelry 💎</h2>
+            <hr />
 
-      <div className="product-grid">
+            <h2>Reviews</h2>
 
-        {products
-          .filter(item =>
-            item.id !== product.id &&
-            item.category === product.category
-          )
+            <input
 
-          .map(item => (
+                type="number"
 
-            <div
-              className="shop-card"
-              key={item.id}
-            >
+                value={rating}
 
-              {item.image && (
+                min="1"
 
-                <img
-                  src={item.image}
-                  className="admin-image"
-                  alt={item.name}
-                />
+                max="5"
 
-              )}
+                onChange={(e) => setRating(e.target.value)}
 
-              <h3>{item.name}</h3>
+            />
 
-              <p>₹{item.price}</p>
+            <br /><br />
 
-              <button
+            <textarea
 
-                onClick={() =>
-                  navigate("/product", {
-                    state: item
-                  })
-                }
+                value={comment}
 
-              >
-                View
-              </button>
+                onChange={(e) => setComment(e.target.value)}
+
+            />
+
+            <br /><br />
+
+            <button onClick={submitReview}>
+                Submit Review
+            </button>
+
+            <hr />
+
+            {reviews.map(r => (
+
+                <div key={r.id}>
+
+                    ⭐ {r.rating}
+
+                    <br />
+
+                    {r.comment}
+
+                    <hr />
+
+                </div>
+
+            ))}
+
+            <h2>Related Products</h2>
+
+            <div className="product-grid">
+
+                {products
+
+                    .filter(p =>
+
+                        p.id !== product.id &&
+
+                        p.category === product.category
+
+                    )
+
+                    .map(item => (
+
+                        <div key={item.id} className="shop-card">
+
+                            {item.image && (
+
+                                <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    className="admin-image"
+                                />
+
+                            )}
+
+                            <h3>{item.name}</h3>
+
+                            <p>₹{item.price}</p>
+
+                            <button
+
+                                onClick={() => navigate(`/product/${item.id}`)}
+
+                            >
+
+                                View
+
+                            </button>
+
+                        </div>
+
+                    ))}
 
             </div>
 
-          ))}
+        </div>
 
-      </div>
-
-    </div>
-
-  );
+    );
 
 }
 

@@ -8,7 +8,7 @@ function Wishlist() {
 
     useEffect(() => {
 
-        fetch("https://jewelry-ecommerce-react-django.onrender.com/api/products/wishlist/", {
+        fetch("https://jewelry-ecommerce-react-django-5.onrender.com/api/products/wishlist/", {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -22,7 +22,7 @@ function Wishlist() {
 
     const removeWishlist = (id) => {
 
-        fetch(`https://jewelry-ecommerce-react-django.onrender.com/api/products/wishlist/${id}/`, {
+        fetch(`https://jewelry-ecommerce-react-django-5.onrender.com/api/products/wishlist/${id}/`, {
             method: "DELETE",
             headers: {
                 Authorization: `Bearer ${token}`

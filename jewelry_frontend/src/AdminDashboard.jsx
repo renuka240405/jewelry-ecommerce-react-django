@@ -42,7 +42,7 @@ function AdminDashboard() {
   const loadProducts = () => {
 
     fetch(
-      "http://127.0.0.1:8000/api/products/products/",
+      "https://jewelry-ecommerce-react-django-5.onrender.com/api/products/products/",
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -66,7 +66,7 @@ function AdminDashboard() {
   const loadOrders = () => {
 
     fetch(
-      "http://127.0.0.1:8000/api/orders/allorders/",
+      "https://jewelry-ecommerce-react-django-5.onrender.com/api/orders/allorders/",
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -118,7 +118,7 @@ function AdminDashboard() {
 
     fetch(
 
-      "http://127.0.0.1:8000/api/products/products/",
+      "https://jewelry-ecommerce-react-django-5.onrender.com/api/products/products/",
 
       {
 
@@ -160,7 +160,7 @@ function AdminDashboard() {
 
     fetch(
 
-      `http://127.0.0.1:8000/api/products/delete/${id}/`,
+      `https://jewelry-ecommerce-react-django-5.onrender.com/api/products/delete/${id}/`,
 
       {
 
@@ -206,7 +206,7 @@ function AdminDashboard() {
 
     fetch(
 
-      `http://127.0.0.1:8000/api/products/products/${id}/`,
+      `https://jewelry-ecommerce-react-django-5.onrender.com/api/products/products/${id}/`,
 
       {
 
@@ -244,7 +244,7 @@ function AdminDashboard() {
 
     fetch(
 
-      `http://127.0.0.1:8000/api/orders/update-status/${id}/`,
+      `https://jhttps://jewelry-ecommerce-react-django-5.onrender.com/api/orders/update-status/${id}/`,
 
       {
 
@@ -421,7 +421,7 @@ product.image.startsWith("http")
 ?
 product.image
 :
-`http://127.0.0.1:8000${product.image}`
+`https://jewelry-ecommerce-react-django-5.onrender.com${product.image}`
 )
 :
 "/no-image.png"

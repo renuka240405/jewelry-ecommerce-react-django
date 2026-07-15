@@ -46,7 +46,7 @@ useEffect(() => {
 
     if (!refresh) return;
 
-    fetch("http://127.0.0.1:8000/api/users/token/refresh/", {
+    fetch("https://jewelry-ecommerce-react-django-5.onrender.com/api/users/token/refresh/", {
 
         method: "POST",
 
@@ -122,7 +122,7 @@ const login=()=>{
 
 fetch(
 
-"http://127.0.0.1:8000/api/users/login/",
+"https://jewelry-ecommerce-react-django-5.onrender.com/api/users/login/",
 
 {
 
@@ -187,7 +187,7 @@ return;
 
 
 let url=
-"http://127.0.0.1:8000/api/products/products/";
+"https://jewelry-ecommerce-react-django-5.onrender.com/api/products/products/";
 
 
 let params=new URLSearchParams();
@@ -281,7 +281,7 @@ useEffect(()=>{
 
 fetch(
 
-"http://127.0.0.1:8000/api/products/categories/",
+"https://jewelry-ecommerce-react-django-5.onrender.com/api/products/categories/",
 
 {
 
@@ -317,7 +317,7 @@ useEffect(() => {
   if (!token) return;
 
   fetch(
-    "http://127.0.0.1:8000/api/products/wishlist/",
+    "https://jewelry-ecommerce-react-django-5.onrender.com/api/products/wishlist/",
     {
       headers: {
         Authorization: `Bearer ${token}`
@@ -514,7 +514,7 @@ JSON.stringify(updated)
 const addWishlist = (item) => {
 
     fetch(
-        "http://127.0.0.1:8000/api/products/wishlist/",
+        "https://jewelry-ecommerce-react-django-5.onrender.com/api/products/wishlist/",
         {
             method: "POST",
             headers: {
@@ -1245,10 +1245,7 @@ element={
 
 
 
-<Route
-    path="/product/:id"
-    element={<ProductDetails/>}
-/>
+<Route path="/product/:id" element={<ProductDetails />} />
 
 
 

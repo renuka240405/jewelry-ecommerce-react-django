@@ -44,7 +44,7 @@ return;
 
 fetch(
 
-"http://127.0.0.1:8000/api/users/register/",
+"https://jewelry-ecommerce-react-django-5.onrender.com/api/users/register/",
 
 {
 

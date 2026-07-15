@@ -22,7 +22,7 @@ const login=()=>{
 
 fetch(
 
-"http://127.0.0.1:8000/api/users/login/",
+"https://jewelry-ecommerce-react-django-5.onrender.com/api/users/login/",
 
 {
 
